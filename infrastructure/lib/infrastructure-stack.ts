@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Network } from './constructs/network';
 import { Ecs } from './constructs/ecs';
+import { Ecspresso } from './constructs/ecspresso';
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -18,6 +19,11 @@ export class InfrastructureStack extends cdk.Stack {
       vpc: network.vpc,
       albSg: network.albSg,
       containerPort,
+    });
+
+    new Ecspresso(this, 'Ecspresso', {
+      network,
+      ecs,
     });
   }
 }

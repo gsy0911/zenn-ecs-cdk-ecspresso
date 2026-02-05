@@ -1,0 +1,11 @@
+region: ap-northeast-1
+cluster: {{ cf_output "ClusterName" }}
+service: zenn-ecs-cdk-ecspresso-service
+service_definition: ecs-service-def.json
+task_definition: ecs-task-def.json
+timeout: 10m
+plugins:
+  - name: cloudformation
+    config:
+      region: ap-northeast-1
+      stack_name: InfrastructureStack

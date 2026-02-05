@@ -1,0 +1,31 @@
+{
+  "family": "zenn-ecs-cdk-ecspresso-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "{{ cf_output \"TaskExecutionRoleArn\" }}",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "{{ cf_output \"EcrRepositoryUri\" }}:latest",
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "{{ cf_output \"LogGroupName\" }}",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "essential": true
+    }
+  ]
+}
