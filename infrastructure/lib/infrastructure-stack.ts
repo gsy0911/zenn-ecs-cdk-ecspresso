@@ -1,16 +1,23 @@
-import * as cdk from 'aws-cdk-lib/core';
+import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Network } from './constructs/network';
+import { Ecs } from './constructs/ecs';
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // The code that defines your stack goes here
+    const containerPort = 8000;
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'InfrastructureQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const network = new Network(this, 'Network', {
+      containerPort,
+    });
+
+    const ecs = new Ecs(this, 'Ecs', {
+      vpc: network.vpc,
+      albSg: network.albSg,
+      containerPort,
+    });
   }
 }
