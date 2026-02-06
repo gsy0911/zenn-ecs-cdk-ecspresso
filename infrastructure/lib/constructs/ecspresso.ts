@@ -48,31 +48,28 @@ export class Ecspresso extends Construct {
     });
 
     new cdk.CfnOutput(this, "ServiceSecurityGroupId", {
+      key: "ServiceSecurityGroupId",
       value: network.ecsSg.securityGroupId,
     });
 
     new cdk.CfnOutput(this, "TargetGroupArn", {
+      key: "TargetGroupArn",
       value: ecs.targetGroup.targetGroupArn,
     });
 
     new cdk.CfnOutput(this, "EcrRepositoryUri", {
+      key: `${env}EcrRepositoryUri`,
       value: repository.repositoryUri,
     });
 
     new cdk.CfnOutput(this, "TaskExecutionRoleArn", {
+      key: `${env}TaskExecutionRoleArn`,
       value: executionRole.roleArn,
     });
 
     new cdk.CfnOutput(this, "LogGroupName", {
+      key: `${env}LogGroupName`,
       value: logGroup.logGroupName,
-    });
-
-    new cdk.CfnOutput(this, "PrivateSubnet1", {
-      value: network.vpc.privateSubnets[0].subnetId,
-    });
-
-    new cdk.CfnOutput(this, "PrivateSubnet2", {
-      value: network.vpc.privateSubnets[1].subnetId,
     });
   }
 }

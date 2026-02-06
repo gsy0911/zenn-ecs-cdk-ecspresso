@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   AWS_REGION: ap-northeast-1
-  ECR_REPOSITORY_NAME: zenn-ecs-cdk-ecspresso-repo
+  ECR_REPOSITORY_NAME: zenn-ecs-cdk-ecspresso-repo-dev
   IMAGE_TAG: '{{.IMAGE_TAG | default "latest"}}'
   AWS_ACCOUNT_ID:
     sh: aws sts get-caller-identity --query Account --output text

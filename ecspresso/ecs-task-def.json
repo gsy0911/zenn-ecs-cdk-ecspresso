@@ -6,11 +6,15 @@
   ],
   "cpu": "256",
   "memory": "512",
-  "executionRoleArn": "{{ cf_output \"TaskExecutionRoleArn\" }}",
+  "executionRoleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `devTaskExecutionRoleArn` }}",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
   "containerDefinitions": [
     {
       "name": "app",
-      "image": "{{ cf_output \"EcrRepositoryUri\" }}:latest",
+      "image": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `devEcrRepositoryUri` }}:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -20,7 +24,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "{{ cf_output \"LogGroupName\" }}",
+          "awslogs-group": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `devLogGroupName` }}",
           "awslogs-region": "ap-northeast-1",
           "awslogs-stream-prefix": "ecs"
         }

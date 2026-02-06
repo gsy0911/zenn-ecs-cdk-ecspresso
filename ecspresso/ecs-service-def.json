@@ -3,18 +3,18 @@
   "networkConfiguration": {
     "awsvpcConfiguration": {
       "subnets": [
-        "{{ cf_output \"PrivateSubnet1\" }}",
-        "{{ cf_output \"PrivateSubnet2\" }}"
+        "{{ cfn_output `zenn-ecs-cdk-ecspresso` `PublicSubnet1` }}",
+        "{{ cfn_output `zenn-ecs-cdk-ecspresso` `PublicSubnet2` }}"
       ],
       "securityGroups": [
-        "{{ cf_output \"ServiceSecurityGroupId\" }}"
+        "{{ cfn_output `zenn-ecs-cdk-ecspresso` `ServiceSecurityGroupId` }}"
       ],
-      "assignPublicIp": "DISABLED"
+      "assignPublicIp": "ENABLED"
     }
   },
   "loadBalancers": [
     {
-      "targetGroupArn": "{{ cf_output \"TargetGroupArn\" }}",
+      "targetGroupArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `TargetGroupArn` }}",
       "containerName": "app",
       "containerPort": 8000
     }
