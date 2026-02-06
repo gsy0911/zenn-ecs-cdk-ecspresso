@@ -1,5 +1,5 @@
-import { Construct } from 'constructs';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { Construct } from "constructs";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 
 export interface NetworkProps {
   containerPort?: number;
@@ -16,38 +16,46 @@ export class Network extends Construct {
     const containerPort = props.containerPort || 8000;
 
     // VPC
-    this.vpc = new ec2.Vpc(this, 'Vpc', {
+    this.vpc = new ec2.Vpc(this, "Vpc", {
       maxAzs: 2,
-      natGateways: 1,
+      natGateways: 0,
       subnetConfiguration: [
         {
           cidrMask: 24,
-          name: 'Public',
+          name: "Public",
           subnetType: ec2.SubnetType.PUBLIC,
         },
         {
           cidrMask: 24,
-          name: 'Private',
+          name: "Private",
           subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
       ],
     });
 
     // Security Group for ALB
-    this.albSg = new ec2.SecurityGroup(this, 'AlbSg', {
+    this.albSg = new ec2.SecurityGroup(this, "AlbSg", {
       vpc: this.vpc,
       allowAllOutbound: true,
-      description: 'Security Group for Application Load Balancer',
+      description: "Security Group for Application Load Balancer",
     });
-    this.albSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP traffic from anywhere');
+    this.albSg.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      "Allow HTTP traffic from anywhere",
+    );
 
     // Security Group for ECS Tasks
-    this.ecsSg = new ec2.SecurityGroup(this, 'EcsSg', {
+    this.ecsSg = new ec2.SecurityGroup(this, "EcsSg", {
       vpc: this.vpc,
       allowAllOutbound: true,
-      description: 'Security Group for ECS Tasks',
+      description: "Security Group for ECS Tasks",
     });
     // Allow traffic from ALB
-    this.ecsSg.addIngressRule(this.albSg, ec2.Port.tcp(containerPort), 'Allow traffic from ALB');
+    this.ecsSg.addIngressRule(
+      this.albSg,
+      ec2.Port.tcp(containerPort),
+      "Allow traffic from ALB",
+    );
   }
 }

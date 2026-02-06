@@ -1,8 +1,8 @@
-import { Construct } from 'constructs';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import { Duration } from 'aws-cdk-lib';
+import { Construct } from "constructs";
+import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import { Duration } from "aws-cdk-lib";
 
 export interface EcsProps {
   vpc: ec2.Vpc;
@@ -22,14 +22,14 @@ export class Ecs extends Construct {
     const { vpc, albSg } = props;
 
     // ECS Cluster
-    this.cluster = new ecs.Cluster(this, 'Cluster', {
+    this.cluster = new ecs.Cluster(this, "Cluster", {
       vpc,
-      clusterName: 'zenn-ecs-cdk-ecspresso-cluster',
-      containerInsights: true,
+      clusterName: "zenn-ecs-cdk-ecspresso-cluster",
+      containerInsightsV2: true,
     });
 
     // ALB
-    this.alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+    this.alb = new elbv2.ApplicationLoadBalancer(this, "Alb", {
       vpc,
       internetFacing: true,
       securityGroup: albSg,
@@ -39,20 +39,20 @@ export class Ecs extends Construct {
     });
 
     // ALB Listener
-    this.listener = this.alb.addListener('Listener', {
+    this.listener = this.alb.addListener("Listener", {
       port: 80,
     });
 
     // Target Group
     // Note: This target group will be used by the ECS Service managed by ecspresso
-    this.targetGroup = new elbv2.ApplicationTargetGroup(this, 'TargetGroup', {
+    this.targetGroup = new elbv2.ApplicationTargetGroup(this, "TargetGroup", {
       vpc,
       port: props.containerPort,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targetType: elbv2.TargetType.IP,
       deregistrationDelay: Duration.seconds(30),
       healthCheck: {
-        path: '/',
+        path: "/",
         healthyThresholdCount: 2,
         unhealthyThresholdCount: 2,
         timeout: Duration.seconds(5),
@@ -60,7 +60,7 @@ export class Ecs extends Construct {
       },
     });
 
-    this.listener.addTargetGroups('DefaultTarget', {
+    this.listener.addTargetGroups("DefaultTarget", {
       targetGroups: [this.targetGroup],
     });
   }
