@@ -5,8 +5,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { Network } from "./network";
 import { Ecs } from "./ecs";
+import { Env } from "../type";
 
 export interface EcspressoProps {
+  env: Env;
   network: Network;
   ecs: Ecs;
 }
@@ -15,13 +17,13 @@ export class Ecspresso extends Construct {
   constructor(scope: Construct, id: string, props: EcspressoProps) {
     super(scope, id);
 
-    const { network, ecs } = props;
+    const { env, network, ecs } = props;
 
     // ECR Repository
     const repository = new ecr.Repository(this, "Repository", {
-      repositoryName: "zenn-ecs-cdk-ecspresso-repo",
+      repositoryName: `zenn-ecs-cdk-ecspresso-repo-${env}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For demonstration purposes
-      autoDeleteImages: true,
+      emptyOnDelete: true,
     });
 
     // Task Execution Role
@@ -36,7 +38,7 @@ export class Ecspresso extends Construct {
 
     // Log Group
     const logGroup = new logs.LogGroup(this, "LogGroup", {
-      logGroupName: "/ecs/zenn-ecs-cdk-ecspresso-task",
+      logGroupName: `/ecs/zenn-ecs-cdk-ecspresso-task-${env}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 

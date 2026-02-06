@@ -3,8 +3,10 @@ import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { Duration } from "aws-cdk-lib";
+import { Env } from "../type";
 
 export interface EcsProps {
+  env: Env;
   vpc: ec2.Vpc;
   albSg: ec2.SecurityGroup;
   containerPort: number;
@@ -19,13 +21,13 @@ export class Ecs extends Construct {
   constructor(scope: Construct, id: string, props: EcsProps) {
     super(scope, id);
 
-    const { vpc, albSg } = props;
+    const { env, vpc, albSg } = props;
 
     // ECS Cluster
     this.cluster = new ecs.Cluster(this, "Cluster", {
       vpc,
-      clusterName: "zenn-ecs-cdk-ecspresso-cluster",
-      containerInsightsV2: true,
+      clusterName: `zenn-ecs-cdk-ecspresso-cluster-${env}`,
+      containerInsightsV2: ecs.ContainerInsights.ENABLED,
     });
 
     // ALB

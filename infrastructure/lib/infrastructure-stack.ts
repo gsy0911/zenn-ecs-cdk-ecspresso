@@ -16,12 +16,14 @@ export class InfrastructureStack extends cdk.Stack {
     });
 
     const ecs = new Ecs(this, "Ecs", {
+      env: "dev",
       vpc: network.vpc,
       albSg: network.albSg,
       containerPort,
     });
 
     new Ecspresso(this, "Ecspresso", {
+      env: "dev",
       network,
       ecs,
     });
