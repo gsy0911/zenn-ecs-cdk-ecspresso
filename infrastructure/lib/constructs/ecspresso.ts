@@ -52,11 +52,6 @@ export class Ecspresso extends Construct {
       value: network.ecsSg.securityGroupId,
     });
 
-    new cdk.CfnOutput(this, "TargetGroupArn", {
-      key: "TargetGroupArn",
-      value: ecs.targetGroup.targetGroupArn,
-    });
-
     new cdk.CfnOutput(this, "EcrRepositoryUri", {
       key: `${env}EcrRepositoryUri`,
       value: repository.repositoryUri,

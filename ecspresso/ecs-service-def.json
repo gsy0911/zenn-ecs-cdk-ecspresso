@@ -1,5 +1,8 @@
 {
   "launchType": "FARGATE",
+  "deploymentController": {
+    "type": "ECS"
+  },
   "networkConfiguration": {
     "awsvpcConfiguration": {
       "subnets": [
@@ -14,14 +17,19 @@
   },
   "loadBalancers": [
     {
-      "targetGroupArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `TargetGroupArn` }}",
+      "targetGroupArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `TargetGroupBlueArn` }}",
       "containerName": "app",
-      "containerPort": 8000
+      "containerPort": 8000,
+      "advancedConfiguration": {
+        "alternateTargetGroupArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `TargetGroupGreenArn` }}",
+        "productionListenerRule": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `ProductionListenerRuleArn` }}",
+        "testListenerRule": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `TestListenerRuleArn` }}",
+        "roleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `EcsBlueGreenDeployRoleArn` }}"
+      }
     }
   ],
-  "desiredCount": 1,
   "deploymentConfiguration": {
-    "maximumPercent": 200,
-    "minimumHealthyPercent": 100
-  }
+    "strategy": "BLUE_GREEN"
+  },
+  "desiredCount": 1
 }
