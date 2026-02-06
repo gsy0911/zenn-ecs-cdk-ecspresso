@@ -1,0 +1,98 @@
+version: '3'
+
+vars:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY_NAME: zenn-ecs-cdk-ecspresso-repo
+  IMAGE_TAG: '{{.IMAGE_TAG | default "latest"}}'
+  AWS_ACCOUNT_ID:
+    sh: aws sts get-caller-identity --query Account --output text
+  ECR_REGISTRY: '{{.AWS_ACCOUNT_ID}}.dkr.ecr.{{.AWS_REGION}}.amazonaws.com'
+  IMAGE_URI: '{{.ECR_REGISTRY}}/{{.ECR_REPOSITORY_NAME}}:{{.IMAGE_TAG}}'
+
+tasks:
+  ecr-login:
+    desc: ECRにログインする
+    cmds:
+      - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.ECR_REGISTRY}}
+
+  docker-build:
+    desc: Dockerイメージをビルドする
+    cmds:
+      - docker build -t {{.ECR_REPOSITORY_NAME}}:{{.IMAGE_TAG}} .
+      - docker tag {{.ECR_REPOSITORY_NAME}}:{{.IMAGE_TAG}} {{.IMAGE_URI}}
+    sources:
+      - Dockerfile
+      - backend/**/*
+      - pyproject.toml
+      - uv.lock
+
+  docker-push:
+    desc: DockerイメージをECRにプッシュする
+    deps:
+      - ecr-login
+    cmds:
+      - docker push {{.IMAGE_URI}}
+
+  docker-build-push:
+    desc: Dockerイメージをビルドしてプッシュする
+    cmds:
+      - task: docker-build
+      - task: docker-push
+
+  docker-build-push-with-tag:
+    desc: タグを指定してビルド&プッシュする
+    cmds:
+      - task: docker-build
+      - task: docker-push
+
+  ecr-list-images:
+    desc: ECRリポジトリのイメージ一覧を表示する
+    cmds:
+      - aws ecr list-images --repository-name {{.ECR_REPOSITORY_NAME}} --region {{.AWS_REGION}}
+
+  ecspresso-deploy:
+    desc: ecspressoでECSサービスをデプロイする
+    dir: ecspresso
+    cmds:
+      - ecspresso deploy --config ecspresso.yml
+
+  ecspresso-verify:
+    desc: タスク定義とサービス定義を検証する
+    dir: ecspresso
+    cmds:
+      - ecspresso verify --config ecspresso.yml
+
+  ecspresso-diff:
+    desc: 現在の状態と定義ファイルの差分を表示する
+    dir: ecspresso
+    cmds:
+      - ecspresso diff --config ecspresso.yml
+
+  ecspresso-status:
+    desc: ECSサービスの現在のステータスを表示する
+    dir: ecspresso
+    cmds:
+      - ecspresso status --config ecspresso.yml
+
+  ecspresso-rollback:
+    desc: 前回のタスク定義にロールバックする
+    dir: ecspresso
+    cmds:
+      - ecspresso rollback --config ecspresso.yml
+
+  ecspresso-scale:
+    desc: サービスのタスク数をスケールする
+    dir: ecspresso
+    cmds:
+      - ecspresso scale --config ecspresso.yml --tasks {{.CLI_ARGS}}
+
+  ecspresso-render:
+    desc: タスク定義とサービス定義をレンダリングして表示する
+    dir: ecspresso
+    cmds:
+      - ecspresso render --config ecspresso.yml
+
+  default:
+    desc: 利用可能なタスクを表示する
+    cmds:
+      - task --list
