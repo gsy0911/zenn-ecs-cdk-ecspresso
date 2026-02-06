@@ -14,7 +14,7 @@
   "containerDefinitions": [
     {
       "name": "app",
-      "image": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `devEcrRepositoryUri` }}:latest",
+      "image": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `devEcrRepositoryUri` }}:{{ env `IMAGE_TAG` `latest` }}",
       "portMappings": [
         {
           "containerPort": 8000,

@@ -53,6 +53,8 @@ tasks:
   ecspresso-deploy:
     desc: ecspressoでECSサービスをデプロイする
     dir: ecspresso
+    env:
+      IMAGE_TAG: '{{.IMAGE_TAG}}'
     cmds:
       - ecspresso deploy --config ecspresso.yml
 

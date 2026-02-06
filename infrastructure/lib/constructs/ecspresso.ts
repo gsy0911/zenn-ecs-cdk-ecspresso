@@ -14,13 +14,15 @@ export interface EcspressoProps {
 }
 
 export class Ecspresso extends Construct {
+  public readonly repository: ecr.Repository;
+
   constructor(scope: Construct, id: string, props: EcspressoProps) {
     super(scope, id);
 
     const { env, network, ecs } = props;
 
     // ECR Repository
-    const repository = new ecr.Repository(this, "Repository", {
+    this.repository = new ecr.Repository(this, "Repository", {
       repositoryName: `zenn-ecs-cdk-ecspresso-repo-${env}`,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For demonstration purposes
       emptyOnDelete: true,
@@ -54,7 +56,7 @@ export class Ecspresso extends Construct {
 
     new cdk.CfnOutput(this, "EcrRepositoryUri", {
       key: `${env}EcrRepositoryUri`,
-      value: repository.repositoryUri,
+      value: this.repository.repositoryUri,
     });
 
     new cdk.CfnOutput(this, "TaskExecutionRoleArn", {
