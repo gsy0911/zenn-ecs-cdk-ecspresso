@@ -29,6 +29,43 @@
     }
   ],
   "deploymentConfiguration": {
+    "bakeTimeInMinutes": 1,
+    "deploymentCircuitBreaker": {
+      "enable": false,
+      "rollback": false
+    },
+    "lifecycleHooks": [
+      {
+        "hookTargetArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `BeforeInstallHookArn` }}",
+        "lifecycleStages": [
+          "PRE_SCALE_UP"
+        ],
+        "roleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `EcsBlueGreenDeployRoleArn` }}"
+      },
+      {
+        "hookTargetArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `AfterInstallHookArn` }}",
+        "lifecycleStages": [
+          "POST_SCALE_UP"
+        ],
+        "roleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `EcsBlueGreenDeployRoleArn` }}"
+      },
+      {
+        "hookTargetArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `BeforeAllowTrafficHookArn` }}",
+        "lifecycleStages": [
+          "TEST_TRAFFIC_SHIFT"
+        ],
+        "roleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `EcsBlueGreenDeployRoleArn` }}"
+      },
+      {
+        "hookTargetArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `AfterAllowTrafficHookArn` }}",
+        "lifecycleStages": [
+          "POST_PRODUCTION_TRAFFIC_SHIFT"
+        ],
+        "roleArn": "{{ cfn_output `zenn-ecs-cdk-ecspresso` `EcsBlueGreenDeployRoleArn` }}"
+      }
+    ],
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 100,
     "strategy": "BLUE_GREEN"
   },
   "desiredCount": 1

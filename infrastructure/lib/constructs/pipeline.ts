@@ -6,6 +6,8 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as path from "path";
 import { Env } from "../type";
 
 export interface PipelineProps {
@@ -21,6 +23,10 @@ export interface PipelineProps {
 export class Pipeline extends Construct {
   public readonly pipeline: codepipeline.Pipeline;
   public readonly codeBuildProject: codebuild.Project;
+  public readonly beforeInstallHook: lambda.Function;
+  public readonly afterInstallHook: lambda.Function;
+  public readonly beforeAllowTrafficHook: lambda.Function;
+  public readonly afterAllowTrafficHook: lambda.Function;
 
   constructor(scope: Construct, id: string, props: PipelineProps) {
     super(scope, id);
@@ -34,6 +40,94 @@ export class Pipeline extends Construct {
       githubBranch,
       githubTokenSecretName,
     } = props;
+
+    // Lambda Hooks for Blue/Green Deployment
+    // BeforeInstall Hook
+    this.beforeInstallHook = new lambda.Function(this, "BeforeInstallHook", {
+      functionName: `ecs-bg-before-install-${env}`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "before_install_hook.handler",
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, "lambda"),
+      ),
+      timeout: cdk.Duration.minutes(5),
+    });
+
+    // AfterInstall Hook
+    this.afterInstallHook = new lambda.Function(this, "AfterInstallHook", {
+      functionName: `ecs-bg-after-install-${env}`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "after_install_hook.handler",
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, "lambda"),
+      ),
+      timeout: cdk.Duration.minutes(5),
+    });
+
+    // BeforeAllowTraffic Hook
+    this.beforeAllowTrafficHook = new lambda.Function(
+      this,
+      "BeforeAllowTrafficHook",
+      {
+        functionName: `ecs-bg-before-allow-traffic-${env}`,
+        runtime: lambda.Runtime.PYTHON_3_12,
+        handler: "before_allow_traffic_hook.handler",
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "lambda"),
+        ),
+        timeout: cdk.Duration.minutes(5),
+      },
+    );
+
+    // AfterAllowTraffic Hook
+    this.afterAllowTrafficHook = new lambda.Function(
+      this,
+      "AfterAllowTrafficHook",
+      {
+        functionName: `ecs-bg-after-allow-traffic-${env}`,
+        runtime: lambda.Runtime.PYTHON_3_12,
+        handler: "after_allow_traffic_hook.handler",
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "lambda"),
+        ),
+        timeout: cdk.Duration.minutes(5),
+      },
+    );
+
+    // Grant necessary permissions to Lambda functions
+    const lambdaPermissions = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "ecs:DescribeServices",
+        "ecs:DescribeTaskDefinition",
+        "ecs:DescribeTasks",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "cloudwatch:PutMetricData",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ],
+      resources: ["*"],
+    });
+
+    this.beforeInstallHook.addToRolePolicy(lambdaPermissions);
+    this.afterInstallHook.addToRolePolicy(lambdaPermissions);
+    this.beforeAllowTrafficHook.addToRolePolicy(lambdaPermissions);
+    this.afterAllowTrafficHook.addToRolePolicy(lambdaPermissions);
+
+    // Grant ECS service permission to invoke Lambda hooks
+    this.beforeInstallHook.grantInvoke(
+      new iam.ServicePrincipal("ecs.amazonaws.com"),
+    );
+    this.afterInstallHook.grantInvoke(
+      new iam.ServicePrincipal("ecs.amazonaws.com"),
+    );
+    this.beforeAllowTrafficHook.grantInvoke(
+      new iam.ServicePrincipal("ecs.amazonaws.com"),
+    );
+    this.afterAllowTrafficHook.grantInvoke(
+      new iam.ServicePrincipal("ecs.amazonaws.com"),
+    );
 
     // CodeBuild Project
     this.codeBuildProject = new codebuild.Project(this, "BuildProject", {
@@ -61,6 +155,18 @@ export class Pipeline extends Construct {
           },
           ENV: {
             value: env,
+          },
+          BEFORE_INSTALL_HOOK_ARN: {
+            value: this.beforeInstallHook.functionArn,
+          },
+          AFTER_INSTALL_HOOK_ARN: {
+            value: this.afterInstallHook.functionArn,
+          },
+          BEFORE_ALLOW_TRAFFIC_HOOK_ARN: {
+            value: this.beforeAllowTrafficHook.functionArn,
+          },
+          AFTER_ALLOW_TRAFFIC_HOOK_ARN: {
+            value: this.afterAllowTrafficHook.functionArn,
           },
         },
       },
@@ -150,6 +256,20 @@ export class Pipeline extends Construct {
       }),
     );
 
+    // Grant Lambda invoke permissions for lifecycle hooks
+    this.codeBuildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["lambda:InvokeFunction"],
+        resources: [
+          this.beforeInstallHook.functionArn,
+          this.afterInstallHook.functionArn,
+          this.beforeAllowTrafficHook.functionArn,
+          this.afterAllowTrafficHook.functionArn,
+        ],
+      }),
+    );
+
     // Source and Build artifacts
     const sourceOutput = new codepipeline.Artifact("SourceOutput");
     const buildOutput = new codepipeline.Artifact("BuildOutput");
@@ -217,6 +337,27 @@ export class Pipeline extends Construct {
     new cdk.CfnOutput(this, "CodeBuildProjectName", {
       key: "CodeBuildProjectName",
       value: this.codeBuildProject.projectName,
+    });
+
+    // Lambda Hook ARNs for ecspresso
+    new cdk.CfnOutput(this, "BeforeInstallHookArn", {
+      key: "BeforeInstallHookArn",
+      value: this.beforeInstallHook.functionArn,
+    });
+
+    new cdk.CfnOutput(this, "AfterInstallHookArn", {
+      key: "AfterInstallHookArn",
+      value: this.afterInstallHook.functionArn,
+    });
+
+    new cdk.CfnOutput(this, "BeforeAllowTrafficHookArn", {
+      key: "BeforeAllowTrafficHookArn",
+      value: this.beforeAllowTrafficHook.functionArn,
+    });
+
+    new cdk.CfnOutput(this, "AfterAllowTrafficHookArn", {
+      key: "AfterAllowTrafficHookArn",
+      value: this.afterAllowTrafficHook.functionArn,
     });
   }
 }

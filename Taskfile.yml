@@ -52,12 +52,29 @@ tasks:
     dir: ecspresso
     env:
       IMAGE_TAG: '{{.IMAGE_TAG}}'
+      BEFORE_INSTALL_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`BeforeInstallHookArn`].OutputValue' --output text
+      AFTER_INSTALL_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`AfterInstallHookArn`].OutputValue' --output text
+      BEFORE_ALLOW_TRAFFIC_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`BeforeAllowTrafficHookArn`].OutputValue' --output text
+      AFTER_ALLOW_TRAFFIC_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`AfterAllowTrafficHookArn`].OutputValue' --output text
     cmds:
       - ecspresso deploy --config ecspresso.yml
 
   ecspresso-verify:
     desc: タスク定義とサービス定義を検証する
     dir: ecspresso
+    env:
+      BEFORE_INSTALL_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`BeforeInstallHookArn`].OutputValue' --output text
+      AFTER_INSTALL_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`AfterInstallHookArn`].OutputValue' --output text
+      BEFORE_ALLOW_TRAFFIC_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`BeforeAllowTrafficHookArn`].OutputValue' --output text
+      AFTER_ALLOW_TRAFFIC_HOOK_ARN:
+        sh: aws cloudformation describe-stacks --stack-name zenn-ecs-cdk-ecspresso --query 'Stacks[0].Outputs[?OutputKey==`AfterAllowTrafficHookArn`].OutputValue' --output text
     cmds:
       - ecspresso verify --config ecspresso.yml
 
