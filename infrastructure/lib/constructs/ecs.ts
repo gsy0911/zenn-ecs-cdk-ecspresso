@@ -51,11 +51,6 @@ export class Ecs extends Construct {
       roleName: `ecs-blue-green-deploy-role-${env}`,
       assumedBy: new aws_iam.ServicePrincipal("ecs.amazonaws.com"),
       managedPolicies: [
-        // aws_iam.ManagedPolicy.fromManagedPolicyArn(
-        //   this,
-        //   "deployCloudWatchFullAccess",
-        //   "arn:aws:iam::aws:policy/AWSOpsWorksCloudWatchLogs",
-        // ),
         aws_iam.ManagedPolicy.fromManagedPolicyArn(
           this,
           "deployByEcs",
