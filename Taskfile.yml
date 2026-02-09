@@ -34,16 +34,13 @@ tasks:
       - docker push {{.IMAGE_URI}}
 
   docker-build-push:
-    desc: Dockerイメージをビルドしてプッシュする
+    desc: Dockerイメージをビルドしてプッシュする (IMAGE_TAG=<tag>で指定可能、デフォルト:latest)
+    # 使用例: IMAGE_TAG=v1.0.0 task docker-build-push
     cmds:
       - task: docker-build
       - task: docker-push
-
-  docker-build-push-with-tag:
-    desc: タグを指定してビルド&プッシュする
-    cmds:
-      - task: docker-build
-      - task: docker-push
+    requires:
+      vars: [IMAGE_TAG]
 
   ecr-list-images:
     desc: ECRリポジトリのイメージ一覧を表示する
