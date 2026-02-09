@@ -170,36 +170,9 @@ export class Pipeline extends Construct {
           },
         },
       },
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: "0.2",
-        phases: {
-          pre_build: {
-            commands: [
-              "echo Logging in to Amazon ECR...",
-              "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com",
-              'echo "IMAGE_TAG: $IMAGE_TAG"',
-            ],
-          },
-          build: {
-            commands: [
-              "echo Build started on `date`",
-              "echo Building the Docker image...",
-              "docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .",
-              "docker tag $ECR_REPOSITORY_URI:$IMAGE_TAG $ECR_REPOSITORY_URI:latest",
-            ],
-          },
-          post_build: {
-            commands: [
-              "echo Build completed on `date`",
-              "echo Pushing the Docker images...",
-              "docker push $ECR_REPOSITORY_URI:$IMAGE_TAG",
-              "docker push $ECR_REPOSITORY_URI:latest",
-              "echo Deploying to ECS with ecspresso...",
-              "ecspresso deploy --config ecspresso/ecspresso.yml",
-            ],
-          },
-        },
-      }),
+      buildSpec: codebuild.BuildSpec.fromAsset(
+        path.join(__dirname, "buildspec.yml"),
+      ),
     });
 
     // Grant permissions to CodeBuild
